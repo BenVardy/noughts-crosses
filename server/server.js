@@ -4,7 +4,7 @@ const app = express();
 const server = require('http').Server(app);
 const io = require('socket.io')(server);
 
-server.listen(8080, '206.189.23.215', () => console.log('listening on port 3000'));
+server.listen(8080, () => console.log('listening on port 3000'));
 
 app.use('/', express.static(`${__dirname}/../build`))
 

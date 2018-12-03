@@ -26,7 +26,7 @@ class Board extends React.Component {
     }
 
     componentDidMount() {
-        const socket = io();
+        const socket = io('http://localhost/8080');
 
         socket.on('player-number', playerNumber => {
             this.setState({ myValue: playerNumber });

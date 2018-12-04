@@ -21,7 +21,8 @@ class Board extends React.Component {
             myValue: null,
             xIsNext: 0,
 
-            waitingForPlayer2: true
+            waitingForPlayer2: true,
+            finished: false
         }
     }
 
@@ -65,7 +66,7 @@ class Board extends React.Component {
         const { socket } = this.state;
 
         const squares = this.state.squares.slice();
-        if (squares[i] === null && this.state.myValue == this.state.xIsNext) {
+        if (squares[i] === null && !this.state.finished && this.state.myValue == this.state.xIsNext) {
             squares[i] = this.state.xIsNext ? 'X' : 'O';
             this.setState({
                 squares,
@@ -111,6 +112,7 @@ class Board extends React.Component {
         let status;
         if (winner) {
             status = 'Winner: ' + winner;
+            if (!this.state.finished) this.setState({ finished: true });
         } else {
             status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
         }

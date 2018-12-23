@@ -1,36 +1,70 @@
 const express = require('express')
+const path = require('path');
 
 const app = express();
-const server = require('http').Server(app);
-const io = require('socket.io')(server);
+const server = require('http').createServer(app);
+const socektio = require('socket.io');
 
-server.listen(8080, () => console.log('listening on port 3000'));
+const io = new socektio(server);
 
-app.use('/', express.static(`${__dirname}/../build`))
+if (!process.env.NODE_ENV) {
+    app.use( express.static(`${__dirname}/../build`) );
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(__dirname, '../build/index.html'));
+    });
+    console.log('Serving static files!');
+}
 
-let connections = [null, null];
+const PORT = 8080;
 
-io.on('connection', socket => {
-    
-    let playerIndex = -1;
-    for (let i in connections) {
-        if (connections[i] === null) {
-            playerIndex = i;
-            break;
+server.listen(PORT, () => console.log(`listening on port ${PORT}`));
+
+let connections = {};
+
+let emptyRoomCheck = setInterval(() => {
+    for (let x in connections) {
+        if (connections[x][0] === null && connections[x][1] === null) {
+            delete connections[x];
+            console.log(`deleted server: ${x}`)
         }
     }
+}, 60000);
 
-    socket.emit('player-number', playerIndex);
+io.on('connection', socket => {
 
-    if (playerIndex == -1) return;
+    socket.on('join-room', roomId => {
 
-    connections[playerIndex] = socket;
+        if (!connections[roomId]) {
+            connections[roomId] = new Array(2).fill(null);
+        }
 
-    socket.broadcast.emit('player-connect', playerIndex);
+        let playerIndex = -1;
+        for (let i in connections[roomId]) {
+            if (connections[roomId][i] === null) {
+                playerIndex = i;
+                break;
+            }
+        }
+    
+        if (playerIndex == -1) return;
 
-    socket.on('turn-done', squares => {
-        socket.broadcast.emit('next-turn', squares);
-    })
+        socket.join(roomId);
+    
+        connections[roomId][playerIndex] = socket;
 
-    socket.on('disconnect', () => connections[playerIndex] = null)
+        socket.emit('player-number', { playerIndex, shouldStart: io.sockets.adapter.rooms[roomId].length >= 2 });
+    
+        socket.to(roomId).emit('player-connect', playerIndex);
+    
+        socket.on('turn-done', squares => {
+            socket.to(roomId).emit('next-turn', squares);
+        });
+    
+        socket.on('disconnect', () => {
+            socket.in(roomId).emit('player-disconnect')
+            connections[roomId][playerIndex] = null
+            socket.leave(roomId)
+        });
+
+    });
 })

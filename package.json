@@ -5,9 +5,13 @@
   "dependencies": {
     "express": "^4.16.4",
     "react": "^16.6.3",
+    "react-copy-to-clipboard": "^5.0.1",
     "react-dom": "^16.6.3",
+    "react-router": "^4.3.1",
+    "react-router-dom": "^4.3.1",
     "react-scripts": "2.1.1",
-    "socket.io": "^2.2.0"
+    "socket.io": "^2.2.0",
+    "uuid": "^3.3.2"
   },
   "scripts": {
     "start": "node server/server.js",
@@ -15,7 +19,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "dev": "concurrently --kill-others-on-fail \"yarn start\" \"yarn start:dev\" "
+    "dev": "concurrently --kill-others-on-fail \"set NODE_ENV=development && yarn start\" \"yarn start:dev\" "
   },
   "browserslist": [
     ">0.2%",

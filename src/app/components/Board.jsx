@@ -4,6 +4,7 @@ import React from 'react';
 import Square from './Square';
 import WaitingDialogue from './WaitingDialogue';
 
+
 export default class Board extends React.Component {
     constructor(props) {
         super(props);
@@ -161,6 +162,7 @@ export default class Board extends React.Component {
                         {this.renderSquare(7)}
                         {this.renderSquare(8)}
                     </div>
+                    {winner || draw ? <div></div> : ""}
                 </div>
             )
         } else {

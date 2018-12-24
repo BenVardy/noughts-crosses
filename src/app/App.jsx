@@ -1,8 +1,11 @@
 import React from 'react';
-import { BrowserRouter as Router, Route } from 'react-router-dom';
+import { Router, Route } from 'react-router-dom';
 
-import Board from './components/Board';
-import NewGameButton from './components/NewGame';
+import history from './history';
+
+import TopBar from './components/TopBar';
+import Game from './components/Game';
+import NewGame from './components/NewGamePage';
 
 export default class App extends React.Component {
 
@@ -11,10 +14,11 @@ export default class App extends React.Component {
 
         return (
             <div>
-                <Router>
+                <TopBar />
+                <Router history={history}>
                     <div>
-                        <Route exact path='/:id' component={Board} />
-                        <Route exact path='/' render={() => <NewGameButton value={value}/>} />
+                        <Route exact path='/:id' component={Game} />
+                        <Route exact path='/' component={NewGame} />
                     </div>
                 </Router>
                 

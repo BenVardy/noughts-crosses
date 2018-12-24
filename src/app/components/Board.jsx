@@ -190,8 +190,7 @@ export default class Board extends React.Component {
                 <div className="board">
                     <div className="status">
                         {status}
-                        <br />
-                        You are {this.state.myValue == 1 ? 'X' : 'O'}
+                        <div className="player-value">You are {this.state.myValue == 1 ? 'X' : 'O'}</div>
                     </div>
                     <div className="board-row">
                         {this.renderSquare(0)}

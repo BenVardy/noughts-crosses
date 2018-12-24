@@ -1,9 +1,8 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, withRouter } from 'react-router-dom';
-import uuid from 'uuid/v4'
+import { BrowserRouter as Router, Route } from 'react-router-dom';
 
 import Board from './components/Board';
-import NewGameButton from './components/NewGameButton';
+import NewGameButton from './components/NewGame';
 
 export default class App extends React.Component {
 

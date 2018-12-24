@@ -1,6 +1,8 @@
 import io from 'socket.io-client';
 import React from 'react';
+import { Redirect } from 'react-router-dom';
 
+import RestartDialogue from './RestartDialogue';
 import Square from './Square';
 import WaitingDialogue from './WaitingDialogue';
 
@@ -14,12 +16,18 @@ export default class Board extends React.Component {
 
             squares: Array(9).fill(null),
             myValue: null,
+            playerIndex: null,
             xIsNext: 0,
 
             waitingForPlayer2: true,
             playerLeft: false,
-            finished: false
-        }
+            finished: false,
+            invalid: false,
+            ready: [false, false]
+        };
+
+        this.handleRestartClick = this.handleRestartClick.bind(this);
+        this.resetGame = this.resetGame.bind(this);
     }
 
     componentDidMount() {
@@ -27,11 +35,22 @@ export default class Board extends React.Component {
 
         socket.emit('join-room', this.props.match.params.id);
 
-        socket.on('player-number', res => {
-            this.setState({ myValue: res.playerIndex });
+        socket.on('invalid-player', () => {
+            this.setState({
+                invalid: true
+            });
+        })
 
-            console.log(res.playerIndex)
-            console.log(res.shouldStart)
+        socket.on('player-number', res => {
+            let { ready } = this.state;
+            ready[res.playerIndex] = true;
+
+            this.setState({ 
+                myValue: res.playerIndex,
+                playerIndex: res.playerIndex,
+                ready
+            });
+            
             if (res.shouldStart) {
                 console.log('starting')
                 this.setState({ 
@@ -40,15 +59,7 @@ export default class Board extends React.Component {
             }
         });
 
-        socket.on('player-connect', playerNumber => {
-            // if (playerNumber == 1) {
-                console.log('starting');
-                this.setState({
-                    squares: Array(9).fill(null),
-                    waitingForPlayer2: false
-                })
-            // }
-        })
+        socket.on('start', this.resetGame);
 
         socket.on('next-turn', squares => {
             this.setState({
@@ -61,7 +72,7 @@ export default class Board extends React.Component {
             this.setState({
                 xIsNext: false,
                 waitingForPlayer2: true,
-                playerLeft: true
+                playerLeft: true,
             })
         })
 
@@ -70,6 +81,32 @@ export default class Board extends React.Component {
             url: window.location.href
         })
 
+    }
+
+    componentDidUpdate() {
+        if (!this.state.finished) {
+            const winner = this.calculateWinner(this.state.squares);
+            const draw = this.testDraw(this.state.squares);
+            if (winner || draw) this.setState({ finished: true, ready: [false, false] });
+        }
+    }
+
+    resetGame(index) {
+        let { ready } = this.state;
+        ready[index] = true;
+
+        this.setState({ ready })
+
+        setTimeout(() =>{
+            if (!ready.includes(false)) {
+                this.setState({
+                    squares: Array(9).fill(null),
+                    waitingForPlayer2: false,
+                    finished: false,
+                    xIsNext: 0,
+                })
+            }
+        }, 500)
     }
 
     handleClick(i) {
@@ -85,6 +122,14 @@ export default class Board extends React.Component {
 
             socket.emit('turn-done', squares)
         }
+    }
+
+    handleRestartClick() {
+        const { socket, playerIndex } = this.state;
+        socket.emit('ready-restart');
+        this.resetGame(playerIndex);
+
+        this.setState({ myValue: 1 - this.state.myValue });
     }
 
     renderSquare(i) {
@@ -126,17 +171,18 @@ export default class Board extends React.Component {
     }
 
     render() {
-        const winner = this.calculateWinner(this.state.squares);
-        const draw = this.testDraw(this.state.squares);
+        if (this.state.invalid) return <Redirect to={ { pathname: '/', invalid: true } } />;
+
         let status;
-        if (winner) {
-            status = 'Winner: ' + winner;
-            if (!this.state.finished) this.setState({ finished: true });
-        } else if (draw) {
-            status = 'Its a Draw!'
-            if (!this.state.finished) this.setState({ finished: true });
+        if (this.state.finished) {
+            const winner = this.calculateWinner(this.state.squares);
+            if (winner) {
+                status = `Winner: ${winner}`;
+            } else {
+                status = 'It\'s a Draw!'; 
+            }
         } else {
-            status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
+            status = `Next player: ${this.state.xIsNext ? 'X' : 'O'}`;
         }
 
         if (!this.state.waitingForPlayer2) {
@@ -144,8 +190,7 @@ export default class Board extends React.Component {
                 <div className="board">
                     <div className="status">
                         {status}
-                        <br />
-                        You are {this.state.myValue == 1 ? 'X' : 'O'}
+                        <div className="player-value">You are {this.state.myValue == 1 ? 'X' : 'O'}</div>
                     </div>
                     <div className="board-row">
                         {this.renderSquare(0)}
@@ -162,7 +207,7 @@ export default class Board extends React.Component {
                         {this.renderSquare(7)}
                         {this.renderSquare(8)}
                     </div>
-                    {winner || draw ? <div></div> : ""}
+                    {this.state.finished ? <RestartDialogue ready={this.state.ready} onClick={this.handleRestartClick} /> : ""}
                 </div>
             )
         } else {

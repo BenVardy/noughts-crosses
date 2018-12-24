@@ -30,6 +30,7 @@ let emptyRoomCheck = setInterval(() => {
     }
 }, 60000);
 
+
 io.on('connection', socket => {
 
     socket.on('join-room', roomId => {
@@ -66,12 +67,17 @@ io.on('connection', socket => {
         socket.on('ready-restart', () => {
             socket.to(roomId).emit('start', playerIndex);
         });
-    
-        socket.on('disconnect', () => {
+
+        let onDisconnect = () => {
             socket.in(roomId).emit('player-disconnect');
             connections[roomId][playerIndex] = null;
             socket.leave(roomId);
-        });
+
+        }
+
+        socket.on('force-disconnect', onDisconnect);
+    
+        socket.on('disconnect', onDisconnect);
 
     });
 });

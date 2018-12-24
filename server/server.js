@@ -46,7 +46,10 @@ io.on('connection', socket => {
             }
         }
     
-        if (playerIndex == -1) return;
+        if (playerIndex == -1) {
+            socket.emit('invalid-player');
+            return;
+        };
 
         socket.join(roomId);
     
@@ -54,7 +57,7 @@ io.on('connection', socket => {
 
         socket.emit('player-number', { playerIndex, shouldStart: io.sockets.adapter.rooms[roomId].length >= 2 });
     
-        socket.to(roomId).emit('player-connect', playerIndex);
+        socket.to(roomId).emit('start');
     
         socket.on('turn-done', squares => {
             socket.to(roomId).emit('next-turn', squares);

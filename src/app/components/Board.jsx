@@ -1,5 +1,6 @@
 import io from 'socket.io-client';
 import React from 'react';
+import { Redirect } from 'react-router-dom';
 
 import Square from './Square';
 import WaitingDialogue from './WaitingDialogue';
@@ -18,18 +19,26 @@ export default class Board extends React.Component {
 
             waitingForPlayer2: true,
             playerLeft: false,
-            finished: false
+            finished: false,
+
+            invalid: false
         }
     }
 
     componentDidMount() {
-        const socket = io();
+        const socket = io('http://localhost:8080');
 
         socket.emit('join-room', this.props.match.params.id);
 
+        socket.on('invalid-player', () => {
+            this.setState({
+                invalid: true
+            });
+        })
+
         socket.on('player-number', res => {
             this.setState({ myValue: res.playerIndex });
-
+            
             console.log(res.playerIndex)
             console.log(res.shouldStart)
             if (res.shouldStart) {
@@ -40,14 +49,12 @@ export default class Board extends React.Component {
             }
         });
 
-        socket.on('player-connect', playerNumber => {
-            // if (playerNumber == 1) {
-                console.log('starting');
-                this.setState({
-                    squares: Array(9).fill(null),
-                    waitingForPlayer2: false
-                })
-            // }
+        socket.on('start', () => {
+            console.log('starting');
+            this.setState({
+                squares: Array(9).fill(null),
+                waitingForPlayer2: false
+            })
         })
 
         socket.on('next-turn', squares => {
@@ -126,6 +133,8 @@ export default class Board extends React.Component {
     }
 
     render() {
+        if (this.state.invalid) return <Redirect to={ { pathname: '/', invalid: true } } />;
+
         const winner = this.calculateWinner(this.state.squares);
         const draw = this.testDraw(this.state.squares);
         let status;

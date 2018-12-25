@@ -13,7 +13,6 @@ export default class Board extends React.Component {
     }
 
     render() {
-        console.log(this.props);
         return (
             <div className="board">
                 <div className="board-row">

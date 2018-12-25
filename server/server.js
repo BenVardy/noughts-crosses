@@ -64,8 +64,8 @@ io.on('connection', socket => {
             socket.to(roomId).emit('next-turn', squares);
         });
 
-        socket.on('ready-restart', () => {
-            socket.to(roomId).emit('start', playerIndex);
+        socket.on('ready-restart', status => {
+            socket.to(roomId).emit('handle-ready', { playerIndex, status });
         });
 
         let onDisconnect = () => {

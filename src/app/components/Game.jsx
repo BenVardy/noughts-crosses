@@ -1,17 +1,22 @@
+import propTypes from 'prop-types';
 import io from 'socket.io-client';
+import history from '../history';
 import React from 'react';
-import { Redirect } from 'react-router-dom';
+import { withStyles } from '@material-ui/core/styles';
+
+import { Grow, Paper, Typography } from '@material-ui/core';
 
 import RestartDialogue from './RestartDialogue';
 import Board from './Board';
 import WaitingDialogue from './WaitingDialogue';
 
-export default class Game extends React.Component {
+import styles from '../css/Game';
+
+class Game extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             socket: null,
-            url: null,
 
             squares: Array(9).fill(null),
             myValue: null,
@@ -22,32 +27,41 @@ export default class Game extends React.Component {
             playerLeft: false,
             finished: false,
             invalid: false,
-            ready: [false, false]
+            ready: [false, false],
+            switched: false,
+
+            mounted: false
         };
 
         this.handleClick = this.handleClick.bind(this);
-        this.handleRestartClick = this.handleRestartClick.bind(this);
+        this.handleRestartChange = this.handleRestartChange.bind(this);
         this.resetGame = this.resetGame.bind(this);
     }
 
     componentDidMount() {
-        const socket = io();
+        const socket = io("http://localhost:8080");
 
-        socket.emit('join-room', this.props.match.params.id);
+        socket.emit('join-room', this.props.url);
 
         socket.on('invalid-player', () => {
-            this.setState({
-                invalid: true
-            });
-        })
+            this.setState({ invalid: true });
+
+            setTimeout(() => {
+                this.setState({ mounted: false });
+            }, 1000);
+
+            setTimeout(() => {
+                history.goBack();
+            }, 1250);
+        });
 
         socket.on('player-number', res => {
             let { ready } = this.state;
             ready[res.playerIndex] = true;
 
             this.setState({ 
-                myValue: res.playerIndex,
                 playerIndex: res.playerIndex,
+                myValue: res.playerIndex,
                 ready
             });
             
@@ -59,7 +73,16 @@ export default class Game extends React.Component {
             }
         });
 
-        socket.on('start', this.resetGame);
+        socket.on('start', index => {
+            let { ready } = this.state;
+            ready[index] = true;
+    
+            this.setState({ ready })
+
+            this.setState({
+                waitingForPlayer2: false
+            })
+        });
 
         socket.on('next-turn', squares => {
             this.setState({
@@ -67,6 +90,16 @@ export default class Game extends React.Component {
                 xIsNext: !this.state.xIsNext
             });
         });
+
+        socket.on('handle-ready', req => {
+            const { ready } = this.state;
+            const { playerIndex, status } = req;
+
+            ready[playerIndex] = status;
+            this.setState({ ready });
+
+            this.resetGame();
+        })
 
         socket.on('player-disconnect', () => {
             this.setState({
@@ -76,9 +109,10 @@ export default class Game extends React.Component {
             })
         })
 
+
         this.setState({
             socket,
-            url: window.location.href
+            mounted: true
         })
 
     }
@@ -91,26 +125,14 @@ export default class Game extends React.Component {
         }
     }
 
-    componentWillReceiveProps(newProps) {
-        const { socket, url } = this.state;
-
-        if (window.location.href === url) return;
-
-        socket.emit('force-disconnect');
-
-        this.setState({ ready: [false, false ]});
-        socket.emit('join-room', newProps.match.params.id);
-
-        this.resetGame();
-
-        this.setState({ socket, url: window.location.href, waitingForPlayer2: true });
+    componentWillUnmount() {
+        this.setState({ mounted: false })
     }
 
-    resetGame(index) {
-        let { ready } = this.state;
-        ready[index] = true;
+    resetGame() {
+        const { ready } = this.state;
 
-        this.setState({ ready })
+        if (!ready.includes(false)) this.setState({ myValue: 1 - this.state.myValue });
 
         setTimeout(() =>{
             if (!ready.includes(false)) {
@@ -118,10 +140,10 @@ export default class Game extends React.Component {
                     squares: Array(9).fill(null),
                     waitingForPlayer2: false,
                     finished: false,
-                    xIsNext: 0,
-                })
+                    xIsNext: 0
+                });
             }
-        }, 500)
+        }, 1000);
     }
 
     handleClick(i) {
@@ -139,15 +161,14 @@ export default class Game extends React.Component {
         }
     }
 
-    handleRestartClick() {
-        const { socket, playerIndex } = this.state;
+    handleRestartChange = name => event => {
+        const { socket, ready } = this.state;
 
-        if (!this.state.ready[playerIndex]) {
-            this.setState({ myValue: 1 - this.state.myValue });
-        }
+        ready[name] = event.target.checked;
+        this.setState({ ready });
 
-        socket.emit('ready-restart');
-        this.resetGame(playerIndex);
+        socket.emit('ready-restart', event.target.checked);
+        this.resetGame(name);
     }
 
     calculateWinner(squares) {
@@ -180,7 +201,15 @@ export default class Game extends React.Component {
     }
 
     render() {
-        if (this.state.invalid) return <Redirect to={ { pathname: '/', invalid: true } } />;
+        const { classes } = this.props;
+
+        if (this.state.invalid) return (
+            <Grow in={this.state.mounted} >
+                <Paper className={classes.root}>
+                    <Typography variant="subtitle1">This Game is Full</Typography>
+                </Paper>
+            </Grow>
+        )
 
         let status;
         if (this.state.finished) {
@@ -196,19 +225,36 @@ export default class Game extends React.Component {
 
         const squares = this.state.squares.slice();
 
-        if (!this.state.waitingForPlayer2) {
-            return (
-                <div>
-                    <div className="status">
-                        {status}
-                        <div className="player-value">You are {this.state.myValue == 1 ? 'X' : 'O'}</div>
-                    </div>
-                    <Board squares={squares} handleClick={this.handleClick} />
-                    {this.state.finished ? <RestartDialogue ready={this.state.ready} onClick={this.handleRestartClick} /> : ""}
-                </div>
-            )
-        } else {
-            return <WaitingDialogue disconnect={this.state.playerLeft} playerNo={this.state.myValue} url={this.state.url} />;
-        }
+        return (
+            <Grow in={this.state.mounted} unmountOnExit >
+                <Paper className={classes.root}>
+                    {!this.state.waitingForPlayer2 ?
+                        <div>
+                            <div className="status">
+                                {status}
+                                <div className="player-value">{!this.state.finished && 'You are ' + (this.state.myValue == 1 ? 'X' : 'O')}</div>
+                            </div>
+                            <Board squares={squares} handleClick={this.handleClick} />
+                            <RestartDialogue
+                                ready={this.state.ready}
+                                playerIndex={this.state.playerIndex}
+                                handleChange={this.handleRestartChange}
+                                style={{
+                                    visibility: this.state.finished ? 'visible' : 'hidden'
+                                }}
+                            />
+                        </div>
+                    :
+                        <WaitingDialogue disconnect={this.state.playerLeft} url={this.props.url} />
+                    }
+                </Paper>
+            </Grow>
+        )
     }
 }
+
+Game.propType = {
+    classes: propTypes.object.isRequired
+};
+
+export default withStyles(styles)(Game);

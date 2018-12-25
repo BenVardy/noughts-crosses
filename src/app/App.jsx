@@ -1,27 +1,39 @@
 import React from 'react';
 import { Router, Route } from 'react-router-dom';
+import { createMuiTheme } from '@material-ui/core/styles';
 
 import history from './history';
 
 import TopBar from './components/TopBar';
-import Game from './components/Game';
-import NewGame from './components/NewGamePage';
+import GameWrapper from './components/GameWrapper';
+import { MuiThemeProvider } from '@material-ui/core/styles';
+
+import { lightGreen, yellow } from '@material-ui/core/colors';
+
+const theme = createMuiTheme({
+    palette: {
+        primary: lightGreen,
+        secondary: yellow
+    },
+    typography: {
+        useNextVariants: true
+    }
+});
 
 export default class App extends React.Component {
 
     render() {
-        let value = "Click To Start a New Game";
-
         return (
             <div>
-                <TopBar />
-                <Router history={history}>
-                    <div>
-                        <Route exact path='/:id' component={Game} />
-                        <Route exact path='/' component={NewGame} />
-                    </div>
-                </Router>
-                
+                <MuiThemeProvider theme={theme}>
+                    <TopBar />
+                    <Router history={history}>
+                        <div>
+                            <Route exact path='/' component={GameWrapper} />
+                            <Route path='/:id' component={GameWrapper} />
+                        </div>
+                    </Router>
+                </MuiThemeProvider>
             </div>
         )
     }

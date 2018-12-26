@@ -9,15 +9,14 @@ import Done from '@material-ui/icons/Done';
 
 const paperStyle = theme => ({
     paper: {
-        // ...theme.mixins.gutters(),
-        paddingTop: theme.spacing.unit * 2,
         // paddingBottom: theme.spacing.unit * 2,
         display: 'inline-block',
         textAlign: 'center',
-        height: 200,
+        height: 250,
         width: 250,
     },
     text: {
+        paddingTop: theme.spacing.unit * 5,
         marginBottom: theme.spacing.unit,
     },
     input: {
@@ -49,7 +48,7 @@ function NewGamePage(props) {
                     <IconButton type="submit" color="primary" className={classes.submit}><Done /></IconButton>
                 </form>
                 <Button
-                    variant={props.variant}
+                    variant="outlined"
                     color="inherit"
                     id="new-game-button"
                     onClick={props.handleNewGame}

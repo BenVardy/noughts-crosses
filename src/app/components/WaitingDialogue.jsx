@@ -6,9 +6,13 @@ import { Fab, TextField, Typography, Tooltip } from '@material-ui/core';
 import { withStyles } from '@material-ui/core/styles';
 
 import FilterNone from '@material-ui/icons/FilterNone';
-import '../css/WaitingDialogue.css';
 
 const styles = theme => ({
+    waiting: {
+        whiteSpace: 'pre-line',
+        paddingTop: theme.spacing.unit * 2,
+        textAlign: 'center'
+    },
     wrapper: {
         display: 'inline-flex'
     },
@@ -49,7 +53,7 @@ class WaitingDialogue extends React.Component {
         const { classes, url } = this.props;
 
         return (
-            <div className="waiting">
+            <div className={classes.waiting}>
                 <Typography variant="subtitle1">
                     {this.props.disconnect ? 'A player has disconnected\n' : null}
                     Waiting For Player 2...

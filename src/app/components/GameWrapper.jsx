@@ -1,4 +1,5 @@
 import React from 'react';
+import history from '../history';
 import uuid from 'uuid/v4';
 
 import { Grid } from '@material-ui/core';
@@ -12,23 +13,24 @@ export default class GameWrapper extends React.Component {
 
         this.state = {
             newGameValue: '',
-            gameUrls: []
+            games: [],
         }
 
         this.handleUrlInputChange = this.handleUrlInputChange.bind(this);
         this.handleUrlInputSubmit = this.handleUrlInputSubmit.bind(this);
         this.handleNewGame = this.handleNewGame.bind(this);
+        this.handleQuit = this.handleQuit.bind(this);
     }
 
     componentDidMount() {
-        let gameUrls;
+        let games;
         if (this.props.match.params.id) {
-            gameUrls = [ this.props.match.params.id ]
+            games = [ { url: this.props.match.params.id, key: uuid() } ]
         } else {
-            gameUrls = [ uuid().slice(0, 8) ]
+            games = [ { url: uuid().slice(0, 8), key: uuid() } ]
         }
 
-        this.setState({ gameUrls });
+        this.setState({ games });
     }
 
     handleUrlInputChange(event) {
@@ -39,42 +41,60 @@ export default class GameWrapper extends React.Component {
 
     handleUrlInputSubmit(event) {
         event.preventDefault();
-        const { newGameValue, gameUrls } = this.state;
+        const { newGameValue, games } = this.state;
 
         if (newGameValue !== '') {
-            gameUrls.push(newGameValue);
+            games.push({ url: newGameValue, key: uuid() });
         }
 
         this.setState({
             newGameValue: '',
-            gameUrls
+            games
         })
     }
 
     handleNewGame() {
-        const { gameUrls } = this.state;
+        const { games } = this.state;
 
-        gameUrls.push(uuid().slice(0, 8));
+        games.push({ url: uuid().slice(0, 8), key: uuid() });
 
         this.setState({
-            gameUrls
+            games
         });
     }
 
+    handleQuit(gameId, gameKey) {
+        const { games } = this.state;
+
+        const pos = games.findIndex(value => {
+            return value.key === gameKey
+        })
+
+        if (gameId === this.props.match.params.id) history.push('/');
+
+        games.splice(pos, 1);
+
+        this.setState({ games });
+    }
+
     render() {
-        const { newGameValue, gameUrls } = this.state;
+        const { newGameValue, games } = this.state;
 
         return (
             <div>
                 <Grid container style={{ marginLeft: '10px' }} spacing={16} justify="flex-start" >
-                    {gameUrls.map((url, index) => {
+                    {games.map(value => {
                         return (
-                            <Grid item key={url + index}>
-                                <Game url={url} />
+                            <Grid item key={value.key}>
+                                <Game
+                                    id={value.key}
+                                    url={value.url}
+                                    handleQuit={this.handleQuit}
+                                />
                             </Grid>
                         );
                     })}
-                    {gameUrls.length < 5 && 
+                    {games.length < 5 && 
                     <Grid item>
                         <NewGamePage 
                             location={{}}

@@ -1,15 +1,15 @@
 import propTypes from 'prop-types';
 import io from 'socket.io-client';
-import history from '../history';
 import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
 
-import { Grow, Paper, Typography } from '@material-ui/core';
+import { Grow, IconButton, Paper, Typography } from '@material-ui/core';
 
 import RestartDialogue from './RestartDialogue';
 import Board from './Board';
 import WaitingDialogue from './WaitingDialogue';
 
+import Close from '@material-ui/icons/Close';
 import styles from '../css/Game';
 
 class Game extends React.Component {
@@ -36,6 +36,7 @@ class Game extends React.Component {
         this.handleClick = this.handleClick.bind(this);
         this.handleRestartChange = this.handleRestartChange.bind(this);
         this.resetGame = this.resetGame.bind(this);
+        this.handleQuit = this.handleQuit.bind(this);
     }
 
     componentDidMount() {
@@ -49,10 +50,6 @@ class Game extends React.Component {
             setTimeout(() => {
                 this.setState({ mounted: false });
             }, 1000);
-
-            setTimeout(() => {
-                history.goBack();
-            }, 1250);
         });
 
         socket.on('player-number', res => {
@@ -103,6 +100,7 @@ class Game extends React.Component {
 
         socket.on('player-disconnect', () => {
             this.setState({
+                squares: Array(9).fill(null),
                 xIsNext: false,
                 waitingForPlayer2: true,
                 playerLeft: true,
@@ -126,7 +124,9 @@ class Game extends React.Component {
     }
 
     componentWillUnmount() {
-        this.setState({ mounted: false })
+        const { socket } = this.state;
+
+        socket.emit('force-disconnect');
     }
 
     resetGame() {
@@ -143,7 +143,7 @@ class Game extends React.Component {
                     xIsNext: 0
                 });
             }
-        }, 1000);
+        }, 750);
     }
 
     handleClick(i) {
@@ -169,6 +169,10 @@ class Game extends React.Component {
 
         socket.emit('ready-restart', event.target.checked);
         this.resetGame(name);
+    }
+
+    handleQuit() {
+        this.setState({ mounted: false });
     }
 
     calculateWinner(squares) {
@@ -225,28 +229,32 @@ class Game extends React.Component {
 
         const squares = this.state.squares.slice();
 
+        const { url, id } = this.props;
         return (
-            <Grow in={this.state.mounted} unmountOnExit >
+            <Grow in={this.state.mounted} onExited={() => this.props.handleQuit(url, id)} unmountOnExit >
                 <Paper className={classes.root}>
-                    {!this.state.waitingForPlayer2 ?
-                        <div>
-                            <div className="status">
-                                {status}
-                                <div className="player-value">{!this.state.finished && 'You are ' + (this.state.myValue == 1 ? 'X' : 'O')}</div>
+                    <IconButton className={classes.close} onClick={this.handleQuit}><Close /></IconButton>
+                    <div className={classes.game}>
+                        {!this.state.waitingForPlayer2 ?
+                            <div>
+                                <div className="status">
+                                    {status}
+                                    <div className="player-value">{!this.state.finished && 'You are ' + (this.state.myValue == 1 ? 'X' : 'O')}</div>
+                                </div>
+                                <Board squares={squares} handleClick={this.handleClick} />
+                                <RestartDialogue
+                                    ready={this.state.ready}
+                                    playerIndex={this.state.playerIndex}
+                                    handleChange={this.handleRestartChange}
+                                    style={{
+                                        visibility: this.state.finished ? 'visible' : 'hidden'
+                                    }}
+                                />
                             </div>
-                            <Board squares={squares} handleClick={this.handleClick} />
-                            <RestartDialogue
-                                ready={this.state.ready}
-                                playerIndex={this.state.playerIndex}
-                                handleChange={this.handleRestartChange}
-                                style={{
-                                    visibility: this.state.finished ? 'visible' : 'hidden'
-                                }}
-                            />
-                        </div>
-                    :
-                        <WaitingDialogue disconnect={this.state.playerLeft} url={this.props.url} />
-                    }
+                        :
+                            <WaitingDialogue disconnect={this.state.playerLeft} url={this.props.url} />
+                        }
+                    </div>
                 </Paper>
             </Grow>
         )

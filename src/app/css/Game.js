@@ -1,8 +1,15 @@
 export default theme => ({
     root: {
-        paddingTop: theme.spacing.unit * 2,
-        height: 200,
+        height: 250,
         width: 250,
         textAlign: 'center'
+    },
+    game: {
+        paddingTop: theme.spacing.unit * 5
+    },
+    close: {
+        display: 'block',
+        padding: 5,
+        float: 'right'
     }
 });

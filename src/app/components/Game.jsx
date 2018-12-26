@@ -39,7 +39,7 @@ class Game extends React.Component {
     }
 
     componentDidMount() {
-        const socket = io();
+        const socket = io('http://localhost:8080');
 
         socket.emit('join-room', this.props.url);
 

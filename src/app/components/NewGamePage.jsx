@@ -2,10 +2,9 @@ import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import PropTypes from 'prop-types';
 
-import { IconButton, Paper, TextField, Typography } from '@material-ui/core';
+import { Button, IconButton, Paper, TextField, Typography } from '@material-ui/core';
 
 import Done from '@material-ui/icons/Done';
-import NewGameButton from './NewGameButton';
 
 
 const paperStyle = theme => ({
@@ -49,7 +48,14 @@ function NewGamePage(props) {
                     />
                     <IconButton type="submit" color="primary" className={classes.submit}><Done /></IconButton>
                 </form>
-                <NewGameButton variant="outlined" />
+                <Button
+                    variant={props.variant}
+                    color="inherit"
+                    id="new-game-button"
+                    onClick={props.handleNewGame}
+                >
+                    New Game
+                </Button>
             </Paper>
         </div>
     )

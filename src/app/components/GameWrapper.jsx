@@ -1,5 +1,5 @@
 import React from 'react';
-import history from '../history';
+import uuid from 'uuid/v4';
 
 import { Grid } from '@material-ui/core';
 
@@ -17,26 +17,18 @@ export default class GameWrapper extends React.Component {
 
         this.handleUrlInputChange = this.handleUrlInputChange.bind(this);
         this.handleUrlInputSubmit = this.handleUrlInputSubmit.bind(this);
+        this.handleNewGame = this.handleNewGame.bind(this);
     }
 
     componentDidMount() {
-        this.componentWillReceiveProps(this.props);
-    }
-
-    componentWillReceiveProps(newProps) {
-
-        let currentUrls;
-        try {
-            currentUrls = newProps.match.params.id.split('~');
-            if (currentUrls[0].length === 0) currentUrls.shift()
-        } catch {
-            currentUrls = [];
+        let gameUrls;
+        if (this.props.match.params.id) {
+            gameUrls = [ this.props.match.params.id ]
+        } else {
+            gameUrls = [ uuid().slice(0, 8) ]
         }
-        
-        
-        this.setState({
-            gameUrls: currentUrls,
-        })
+
+        this.setState({ gameUrls });
     }
 
     handleUrlInputChange(event) {
@@ -47,39 +39,51 @@ export default class GameWrapper extends React.Component {
 
     handleUrlInputSubmit(event) {
         event.preventDefault();
-        const { newGameValue } = this.state;
+        const { newGameValue, gameUrls } = this.state;
 
         if (newGameValue !== '') {
-            let lastAddress = history.location.pathname;
-            history.push(`${lastAddress}${lastAddress === '/' ? '' : '~'}${newGameValue}`);
+            gameUrls.push(newGameValue);
         }
 
         this.setState({
-            newGameValue: ''
+            newGameValue: '',
+            gameUrls
         })
     }
 
+    handleNewGame() {
+        const { gameUrls } = this.state;
+
+        gameUrls.push(uuid().slice(0, 8));
+
+        this.setState({
+            gameUrls
+        });
+    }
+
     render() {
-        const { newGameValue } = this.state;
+        const { newGameValue, gameUrls } = this.state;
 
         return (
             <div>
                 <Grid container style={{ marginLeft: '10px' }} spacing={16} justify="flex-start" >
-                    {this.state.gameUrls.map((url, index) => {
+                    {gameUrls.map((url, index) => {
                         return (
                             <Grid item key={url + index}>
                                 <Game url={url} />
                             </Grid>
                         );
                     })}
+                    {gameUrls.length < 5 && 
                     <Grid item>
                         <NewGamePage 
                             location={{}}
                             value={newGameValue}
-                            handleSubmit={this.handleUrlInputSubmit} 
+                            handleSubmit={this.handleUrlInputSubmit}
                             handleChange={this.handleUrlInputChange}
+                            handleNewGame={this.handleNewGame}
                         />
-                    </Grid>
+                    </Grid>}
                 </Grid>
             </div>
         )

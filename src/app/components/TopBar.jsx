@@ -1,6 +1,5 @@
 import React from 'react';
 
-import NewGameButton from './NewGameButton';
 import { AppBar, Toolbar, Typography } from '@material-ui/core';
 
 import '../css/TopBar.css';
@@ -14,7 +13,6 @@ export default function(props) {
                     <Typography className="grow" variant="h6" color="inherit">
                         Noughts & Crosses
                     </Typography>
-                    <NewGameButton variant="outlined" />
                 </Toolbar>
             </AppBar>
         </div>

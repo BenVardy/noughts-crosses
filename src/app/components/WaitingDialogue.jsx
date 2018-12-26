@@ -99,7 +99,7 @@ class WaitingDialogue extends React.Component {
                 </div>
                 <div className={classes.copyFull}>
                     <CopyToClipboard 
-                        text={`${window.location.href}${url}`}
+                        text={`${window.location.protocol}//${window.location.host}/${url}`}
                         onCopy={() => this.handleTooltipOpen('urlTooltip')}
                     >
                         <Tooltip

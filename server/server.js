@@ -1,4 +1,4 @@
-const express = require('express')
+const express = require('express');
 const path = require('path');
 
 const app = express();
@@ -21,7 +21,7 @@ server.listen(PORT, () => console.log(`listening on port ${PORT}`));
 
 let connections = {};
 
-let emptyRoomCheck = setInterval(() => {
+setInterval(() => {
     for (let x in connections) {
         if (connections[x][0] === null && connections[x][1] === null) {
             delete connections[x];
@@ -70,10 +70,11 @@ io.on('connection', socket => {
 
         let onDisconnect = () => {
             socket.in(roomId).emit('player-disconnect');
-            connections[roomId][playerIndex] = null;
+            try {
+                connections[roomId][playerIndex] = null;
+            } catch(ex) {}
             socket.leave(roomId);
-
-        }
+        };
 
         socket.on('force-disconnect', onDisconnect);
     

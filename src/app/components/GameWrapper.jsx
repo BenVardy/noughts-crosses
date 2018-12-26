@@ -14,7 +14,7 @@ export default class GameWrapper extends React.Component {
         this.state = {
             newGameValue: '',
             games: [],
-        }
+        };
 
         this.handleUrlInputChange = this.handleUrlInputChange.bind(this);
         this.handleUrlInputSubmit = this.handleUrlInputSubmit.bind(this);
@@ -25,9 +25,9 @@ export default class GameWrapper extends React.Component {
     componentDidMount() {
         let games;
         if (this.props.match.params.id) {
-            games = [ { url: this.props.match.params.id, key: uuid() } ]
+            games = [ { url: this.props.match.params.id, key: uuid() } ];
         } else {
-            games = [ { url: uuid().slice(0, 8), key: uuid() } ]
+            games = [ { url: uuid().slice(0, 8), key: uuid() } ];
         }
 
         this.setState({ games });
@@ -36,7 +36,7 @@ export default class GameWrapper extends React.Component {
     handleUrlInputChange(event) {
         this.setState({
             newGameValue: event.target.value
-        })
+        });
     }
 
     handleUrlInputSubmit(event) {
@@ -50,7 +50,7 @@ export default class GameWrapper extends React.Component {
         this.setState({
             newGameValue: '',
             games
-        })
+        });
     }
 
     handleNewGame() {
@@ -67,12 +67,16 @@ export default class GameWrapper extends React.Component {
         const { games } = this.state;
 
         const pos = games.findIndex(value => {
-            return value.key === gameKey
-        })
+            return value.key === gameKey;
+        });
 
         if (gameId === this.props.match.params.id) history.push('/');
 
-        games.splice(pos, 1);
+        if (pos === 0 && games.length === 1) {
+            games.splice(pos, 1, { url: uuid().slice(0, 8), key: uuid() });
+        } else {
+            games.splice(pos, 1);
+        }
 
         this.setState({ games });
     }
@@ -82,7 +86,7 @@ export default class GameWrapper extends React.Component {
 
         return (
             <div>
-                <Grid container style={{ marginLeft: '10px' }} spacing={16} justify="flex-start" >
+                <Grid container justify="flex-start" >
                     {games.map(value => {
                         return (
                             <Grid item key={value.key}>
@@ -106,7 +110,7 @@ export default class GameWrapper extends React.Component {
                     </Grid>}
                 </Grid>
             </div>
-        )
+        );
     }
 
 }

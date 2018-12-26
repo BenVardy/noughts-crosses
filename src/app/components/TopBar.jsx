@@ -4,8 +4,7 @@ import { AppBar, Toolbar, Typography } from '@material-ui/core';
 
 import '../css/TopBar.css';
 
-export default function(props) {
-
+export default function TopBar() {
     return (
         <div className="bar-root">
             <AppBar position="static">
@@ -16,6 +15,6 @@ export default function(props) {
                 </Toolbar>
             </AppBar>
         </div>
-    )
+    );
 }
 

@@ -40,7 +40,7 @@ class Game extends React.Component {
     }
 
     componentDidMount() {
-        const socket = io('http://localhost:8080');
+        const socket = io();
 
         socket.emit('join-room', this.props.url);
 
@@ -63,7 +63,6 @@ class Game extends React.Component {
             });
             
             if (res.shouldStart) {
-                console.log('starting')
                 this.setState({ 
                     waitingForPlayer2: false
                 });
@@ -74,11 +73,11 @@ class Game extends React.Component {
             let { ready } = this.state;
             ready[index] = true;
     
-            this.setState({ ready })
+            this.setState({ ready });
 
             this.setState({
                 waitingForPlayer2: false
-            })
+            });
         });
 
         socket.on('next-turn', squares => {
@@ -96,7 +95,7 @@ class Game extends React.Component {
             this.setState({ ready });
 
             this.resetGame();
-        })
+        });
 
         socket.on('player-disconnect', () => {
             this.setState({
@@ -104,14 +103,14 @@ class Game extends React.Component {
                 xIsNext: false,
                 waitingForPlayer2: true,
                 playerLeft: true,
-            })
-        })
+            });
+        });
 
 
         this.setState({
             socket,
             mounted: true
-        })
+        });
 
     }
 
@@ -143,7 +142,7 @@ class Game extends React.Component {
                     xIsNext: 0
                 });
             }
-        }, 750);
+        }, 1000);
     }
 
     handleClick(i) {
@@ -157,18 +156,18 @@ class Game extends React.Component {
                 xIsNext: !this.state.xIsNext
             });
 
-            socket.emit('turn-done', squares)
+            socket.emit('turn-done', squares);
         }
     }
 
-    handleRestartChange = name => event => {
-        const { socket, ready } = this.state;
-
-        ready[name] = event.target.checked;
-        this.setState({ ready });
-
-        socket.emit('ready-restart', event.target.checked);
-        this.resetGame(name);
+    handleRestartChange(name) {
+        return event => {
+            const { socket, ready } = this.state;
+            ready[name] = event.target.checked;
+            this.setState({ ready });
+            socket.emit('ready-restart', event.target.checked);
+            this.resetGame(name);
+        };
     }
 
     handleQuit() {
@@ -208,12 +207,12 @@ class Game extends React.Component {
         const { classes } = this.props;
 
         if (this.state.invalid) return (
-            <Grow in={this.state.mounted} >
+            <Grow in={this.state.mounted} onExited={() => this.props.handleQuit(url, id)} >
                 <Paper className={classes.root}>
-                    <Typography variant="subtitle1">This Game is Full</Typography>
+                    <Typography className={classes.invalid} variant="subtitle1">This Game is Full</Typography>
                 </Paper>
             </Grow>
-        )
+        );
 
         let status;
         if (this.state.finished) {
@@ -234,9 +233,9 @@ class Game extends React.Component {
             <Grow in={this.state.mounted} onExited={() => this.props.handleQuit(url, id)} unmountOnExit >
                 <Paper className={classes.root}>
                     <IconButton className={classes.close} onClick={this.handleQuit}><Close /></IconButton>
-                    <div className={classes.game}>
+                    <div className={classes.gameWrapper}>
                         {!this.state.waitingForPlayer2 ?
-                            <div>
+                            <div className={classes.game}>
                                 <div className="status">
                                     {status}
                                     <div className="player-value">{!this.state.finished && 'You are ' + (this.state.myValue == 1 ? 'X' : 'O')}</div>
@@ -251,13 +250,13 @@ class Game extends React.Component {
                                     }}
                                 />
                             </div>
-                        :
+                            :
                             <WaitingDialogue disconnect={this.state.playerLeft} url={this.props.url} />
                         }
                     </div>
                 </Paper>
             </Grow>
-        )
+        );
     }
 }
 

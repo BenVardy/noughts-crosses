@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 
-import { Fab, TextField, Typography, Tooltip } from '@material-ui/core';
+import { Button, Fab, TextField, Typography, Tooltip } from '@material-ui/core';
 import { withStyles } from '@material-ui/core/styles';
 
 import FilterNone from '@material-ui/icons/FilterNone';
@@ -22,8 +22,10 @@ const styles = theme => ({
         alignSelf: 'center'
     },
     urlLink: {
-        width: 125,
-        cursor: 'default'
+        width: 125
+    },
+    copyFull: {
+        marginTop: theme.spacing.unit * 2
     }
 });
 
@@ -32,21 +34,22 @@ class WaitingDialogue extends React.Component {
         super(props);
 
         this.state = {
-            tooltipOpen: false
-        }
+            idTooltip: false,
+            urlTooltip: false
+        };
 
         this.handleTooltipOpen = this.handleTooltipOpen.bind(this);
         this.handleTooltipClose = this.handleTooltipClose.bind(this);
     }
 
-    handleTooltipOpen() {
-        this.setState({ tooltipOpen: true });
+    handleTooltipOpen(id) {
+        this.setState({ [id]: true });
 
-        setTimeout(this.handleTooltipClose, 1000);
+        setTimeout(() => this.handleTooltipClose(id), 1000);
     }
 
-    handleTooltipClose() {
-        this.setState({ tooltipOpen: false });
+    handleTooltipClose(id) {
+        this.setState({ [id]: false });
     }
 
     render() {
@@ -54,32 +57,35 @@ class WaitingDialogue extends React.Component {
 
         return (
             <div className={classes.waiting}>
+                <Typography
+                    variant="subtitle1"
+                    style={{ visibility: this.props.disconnect ? 'visible' : 'hidden' }}
+                >A player has disconnected</Typography>
                 <Typography variant="subtitle1">
-                    {this.props.disconnect ? 'A player has disconnected\n' : null}
+                    
                     Waiting For Player 2...
                 </Typography>
                 <div className={classes.wrapper}>
                     <TextField
-                        id="url-readonly"
+                        id="id-readonly"
                         className={classes.urlLink}
                         label="Game ID"
                         defaultValue={url}
                         margin="dense"
                         variant="outlined"
-                        size="small"
                         InputProps={{
                             readOnly: true,
                         }}
                     />
                     <div className="copy-button">
                         <CopyToClipboard 
-                            text={this.props.url}
-                            onCopy={this.handleTooltipOpen}
+                            text={url}
+                            onCopy={() => this.handleTooltipOpen('idTooltip')}
                         >
                             <Tooltip
                                 PopperProps={{ disablePortal: true }}
                                 onClose={this.handleTooltipClose}
-                                open={this.state.tooltipOpen}
+                                open={this.state.idTooltip}
                                 disableFocusListener
                                 disableHoverListener
                                 disableTouchListener
@@ -91,8 +97,27 @@ class WaitingDialogue extends React.Component {
                         </CopyToClipboard>
                     </div>
                 </div>
+                <div className={classes.copyFull}>
+                    <CopyToClipboard 
+                        text={`${window.location.href}${url}`}
+                        onCopy={() => this.handleTooltipOpen('urlTooltip')}
+                    >
+                        <Tooltip
+                            PopperProps={{ disablePortal: true }}
+                            onClose={this.handleTooltipClose}
+                            open={this.state.urlTooltip}
+                            disableFocusListener
+                            disableHoverListener
+                            disableTouchListener
+                            title="Copied"
+                            placement="right"
+                        >
+                            <Button size="large" variant="contained" color="primary">Copy Full URL</Button>
+                        </Tooltip>
+                    </CopyToClipboard>
+                </div>
             </div>
-        )
+        );
     }
 }
 

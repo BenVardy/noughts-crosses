@@ -32,9 +32,9 @@ export default class App extends React.Component {
                             <Route exact path='/' component={GameWrapper} />
                             <Route path='/:id' component={GameWrapper} />
                         </div>
-                    </Router>
+                    </Router>                    
                 </MuiThemeProvider>
             </div>
-        )
+        );
     }
 }

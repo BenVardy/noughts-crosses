@@ -45,7 +45,7 @@ function RestartDialogue(props) {
                 />
             </FormGroup>
         </div>
-    )
+    );
 }
 
 export default withStyles(style)(RestartDialogue);
